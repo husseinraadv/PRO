@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>دردشة الأماني</title>
+  <style>
+    body {
+      font-family: "Cairo", sans-serif;
+      background-color: #f4f8fc;
+      margin: 0;
+      padding: 0;
+    }
+    .chat-container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+    .message {
+      margin-bottom: 15px;
+      padding: 12px;
+      border-radius: 10px;
+    }
+    .bot {
+      background-color: #e3f2fd;
+      color: #0d47a1;
+    }
+    .user {
+      background-color: #d1f7d6;
+      color: #1b5e20;
+      text-align: left;
+    }
+    input, button {
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      width: calc(100% - 24px);
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #0d47a1;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1565c0;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div id="chat-box">
+      <div class="message bot">👋 هلا بيك وياك بوت الأماني! شنو حاب تستفسر عنه؟</div>
+    </div>
+
+    <input type="text" id="user-input" placeholder="اكتب سؤالك هنا..." />
+    <button onclick="sendMessage()">إرسال</button>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById("user-input");
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      const chatBox = document.getElementById("chat-box");
+
+      const userDiv = document.createElement("div");
+      userDiv.className = "message user";
+      userDiv.innerText = msg;
+      chatBox.appendChild(userDiv);
+
+      input.value = "";
+
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg }),
+      });
+
+      const data = await response.json();
+
+      const botDiv = document.createElement("div");
+      botDiv.className = "message bot";
+      botDiv.innerText = data.reply || "عذرًا، ما فهمت سؤالك.";
+      chatBox.appendChild(botDiv);
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+</body>
+</html>
