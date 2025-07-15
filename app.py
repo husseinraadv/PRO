@@ -5,13 +5,26 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain_groq import ChatGroq
 import os
+import json
+from tempfile import NamedTemporaryFile
 
 app = Flask(__name__)
 
 # إعداد الاتصال بـ Google Sheets
 def load_products():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+    
+    # ✅ قراءة بيانات الاعتماد من متغير بيئة بدل الملف
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS")
+    if not creds_json:
+        raise ValueError("GOOGLE_CREDENTIALS not set")
+
+    creds_dict = json.loads(creds_json)
+    with NamedTemporaryFile(mode="w+", delete=False, suffix=".json") as temp:
+        json.dump(creds_dict, temp)
+        temp.flush()
+        creds = ServiceAccountCredentials.from_json_keyfile_name(temp.name, scope)
+
     client = gspread.authorize(creds)
     sheet_url = "https://docs.google.com/spreadsheets/d/1Bg0s6LuuGoIX3Ni-UT-KYiTjff6t6PP_2Zrxx-d4sSg/edit#gid=0"
     sheet = client.open_by_url(sheet_url).sheet1
@@ -80,7 +93,6 @@ def handle_chat():
     except Exception as e:
         print("خطأ:", e)
         return jsonify({"reply": "⚠️ صار خطأ، جرب تراسلنا بعد شوي."}), 500
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
